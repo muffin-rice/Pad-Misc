@@ -5,6 +5,8 @@ import scipy.stats as stats
 
 columns = 6
 rows = 5
+ITERATIONS = 100000
+sf_distribution = [1/6, 1/6, 1/6, 1/6, 1/6, 1/6, 0, 0]
 
 class Match: 
     #a match is just gonna be a collection of combos
@@ -148,15 +150,11 @@ def remove_combos(board : [[str]], combos : [[(int, int)]], skyfall = True):  # 
 
     fall_all(board)
 
-    # SKYFALLLLLLLLLLL
     if skyfall: 
         for i in range(rows): 
             for j in range(columns): 
                 if board[i][j] == ' ': 
-                    board[i][j] = random.choices('RBGLDHJP', [1/4, 1/4, 1/4, 0, 1/4, 0, 0, 0])[0]
-                    #normal: [1/6, 1/6, 1/6, 1/6, 1/6, 1/6, 0, 0]
-                    #xellos: [1/4, 1/4, 1/4, 0, 1/4, 0, 0, 0]
-                    #off color (ie jeanne enma but lin bicolor): [1/4, 1/4, 1/4, 0, 0, 1/4, 0, 0]
+                    board[i][j] = random.choices('RBGLDHJP', sf_distribution)[0]
 
 def find_nosf_combos(board : [[str]]): 
     all_combos = []
@@ -203,6 +201,11 @@ def find_nosf_combos(board : [[str]]):
         all_combos.pop(j-i)
     return [combo.get_coord() for combo in all_combos]
 
+def set_skyfalls(distribution : [int]): 
+    '''sets the skyfalls in order of RBGLDHJP'''
+    global sf_distribution
+    sf_distribution = distribution
+
 def calculate_base_combo(board : [[str]]): 
     total_combos = 0 
     combo_coords = find_nosf_combos(board)
@@ -213,9 +216,9 @@ def calculate_base_combo(board : [[str]]):
     
     return total_combos
 
-def print_combo_stats(board_string : str, board_size : (0,1), x_sf, print_stats = True, skyfall = True): 
-    '''board size is 0 for 6x5 and 1 for 7x6
-    x_combos is how many skyfalls you want''' 
+def combo_sim(board_string : str, board_size : (0,1), x_sf : (int, int), print_stats = True, skyfall = True) -> (str, int, int, int, int): 
+    '''board size is 0 for 6x5 and 1 for 7x6;
+    x_sf is how many skyfalls you want over how many turns''' 
     global rows 
     global columns 
     if board_size == 1: 
@@ -233,7 +236,7 @@ def print_combo_stats(board_string : str, board_size : (0,1), x_sf, print_stats 
 
     if skyfall: 
     
-        for i in range(100000): 
+        for i in range(ITERATIONS): 
 
             #print(f'Iteration {i}')
 
@@ -256,15 +259,16 @@ def print_combo_stats(board_string : str, board_size : (0,1), x_sf, print_stats 
 
             cc_list.append(total_combos)
 
-        mean, std = (np.mean(cc_list), np.std(cc_list))
+        sum_list = [sum(cc_list[i:(i+x_sf[1])]) - x_sf[1]*base_combo_count for i in range(ITERATIONS-x_sf[1])]
+        avg, avg_sf, min_c, p = (np.mean(cc_list), np.mean(cc_list) - base_combo_count, min(cc_list), sum(x > x_sf[0] for x in sum_list)/ITERATIONS)
         if print_stats: 
             print(f'board was {board_string}')
-            print(f'The mean combos is {mean}')
-            print(f'The mean number of skyfalls is {mean - base_combo_count}')
-            print(f'The min number of combos is {min(cc_list)}')
-            print(f'The observed probability of getting {x_sf} skyfalls is {sum(i >= base_combo_count + x_sf for i in cc_list)/len(cc_list)}')
+            print(f'The mean combos is {avg}')
+            print(f'The mean number of skyfalls is {n_sf}')
+            print(f'The min number of combos is {min_c}')
+            print(f'The observed probability of getting {x_sf[0]} skyfalls over {x_sf[1]} turns is {sum(i >= base_combo_count + x_sf for i in cc_list)/len(cc_list)}')
         
-        return (base_combo_count, mean, std)
+        return (board_string, avg, avg_sf, min_c, p)
     
     else: 
         print(f'The combo count is {base_combo_count}')
@@ -279,6 +283,11 @@ if __name__ == '__main__':
     #10c cascade: DLDLLDLLDLLDDLLDDLDDLLLDDLDDDL
     #10c inverted: LDLDDLDDLDDLLDDLLDLLDDDLLDLLLD
     #10c: DDDLLLLLLDDDDDDLLLLLLDDDDDDLLL
+
+    set_skyfalls([1/4, 1/4, 1/4, 0, 1/4, 0, 0, 0])
+    #normal: [1/6, 1/6, 1/6, 1/6, 1/6, 1/6, 0, 0]
+    #xellos: [1/4, 1/4, 1/4, 0, 1/4, 0, 0, 0]
+    #off color from lin (ie jeanne enma): [1/4, 1/4, 1/4, 0, 0, 1/4, 0, 0]
     '''
     LDLDDL
     DDLDDL
@@ -286,4 +295,4 @@ if __name__ == '__main__':
     LLDDDL
     LDLLLD
     '''
-    print_combo_stats(board_string, 0, 5, print_stats = True, skyfall = True)
+    combo_sim(board_string, 0, (15,2), print_stats = True, skyfall = True)
