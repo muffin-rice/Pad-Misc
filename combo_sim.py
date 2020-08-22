@@ -264,9 +264,9 @@ def combo_sim(board_string : str, board_size : (0,1), x_sf : (int, int), print_s
         if print_stats: 
             print(f'board was {board_string}')
             print(f'The mean combos is {avg}')
-            print(f'The mean number of skyfalls is {n_sf}')
+            print(f'The mean number of skyfalls is {avg_sf}')
             print(f'The min number of combos is {min_c}')
-            print(f'The observed probability of getting {x_sf[0]} skyfalls over {x_sf[1]} turns is {sum(i >= base_combo_count + x_sf for i in cc_list)/len(cc_list)}')
+            print(f'The observed probability of getting {x_sf[0]} skyfalls over {x_sf[1]} turns is {p}')
         
         return (board_string, avg, avg_sf, min_c, p)
     
@@ -279,7 +279,7 @@ def combo_sim(board_string : str, board_size : (0,1), x_sf : (int, int), print_s
 
 if __name__ == '__main__': 
 
-    board_string = "HJHJHJJLLLJHHJHLHJJHJLPHHJHJHJ"
+    board_string = "DDDLLLLLLDDDDDDLLLLLLDDDDDDLLL"
     #10c cascade: DLDLLDLLDLLDDLLDDLDDLLLDDLDDDL
     #10c inverted: LDLDDLDDLDDLLDDLLDLLDDDLLDLLLD
     #10c: DDDLLLLLLDDDDDDLLLLLLDDDDDDLLL
