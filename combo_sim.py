@@ -95,31 +95,32 @@ def combo_sim(board_string: str, x_sf: (int, int), print_stats=True, skyfall=Tru
     perm_board = [[board_string[i * columns + j] for j in range(columns)] for i in range(rows)]
 
     # no skyfall combo count is on cc_list[0]
-
     cc_list = []  # number of combos per iteration
     guard_breaks = 0 # number of guard break activations
 
     for i in range(ITERATIONS+1):
         board = copy.deepcopy(perm_board)
         total_combos = 0
+        orbs_used = 0
         guard_break = False
         combo_coords = find_combos(board)
 
         while len(combo_coords) > 0:
             total_combos += len(combo_coords)
+            orbs_used += sum([len(match) for match in combo_coords])
             remove_combos(board, combo_coords)
             fall_all(board)
             if cc_list:
                 create_skyfalls(board)
             combo_coords = find_combos(board)
 
+        if not skyfall:
+            return total_combos, 30-orbs_used
+
         cc_list.append(total_combos)
 
     base_combo_count = cc_list[0]
     cc_list = cc_list[1:]
-
-    if not skyfall:
-        return base_combo_count
 
     sum_list = [sum(cc_list[i:(i + x_sf[1])]) - x_sf[1] * base_combo_count for i in range(ITERATIONS - x_sf[1])]
     avg, avg_sf, min_c, p = (np.mean(cc_list), np.mean(cc_list) - base_combo_count, min(cc_list),
