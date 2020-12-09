@@ -11,13 +11,13 @@ class Match:
         if other.att != self.att:
             return False
 
-            # each combo is a tuple in the form (root, length, direction), with the root being in the top left
+        # each combo is a tuple in the form (root, length, direction), with the root being in the top left
         for combo in self.combos:
             for others in other.combos:
                 # if they're in opposite directions; ie L pattern
                 if combo[2] != others[2]:
                     if combo[2] == 'h':
-                        # the first clause ensures self is beneath the other combo (but not too far beneath)
+                        # the first clause ensures self is just beneath the other combo
                         # the second clause ensures that self is to the left of the other combo
                         if ((0 <= combo[0][0] - others[0][0] < others[1]) and (
                                 0 <= others[0][1] - combo[0][1] < combo[1])):

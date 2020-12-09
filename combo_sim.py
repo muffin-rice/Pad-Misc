@@ -7,9 +7,17 @@ from match import Match
 
 columns = 6
 rows = 5
-ITERATIONS = 100000
+ITERATIONS = 10000
 sf_distribution = [1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6, 1 / 6, 0, 0]
 
+def gen_random_board():
+    board = []
+    for i in range(rows):
+        board.append([])
+        for j in range(columns):
+            board[i].append(random.choices('RBGLDHJP', sf_distribution)[0])
+
+    return board
 
 def print_board(board: [[str]]):  # debugging purposes
     print('\n'.join(''.join(orb for orb in row) for row in board))
@@ -86,6 +94,19 @@ def remove_combos(board: [[str]], combos: [[(int, int)]]):
         for coord in combo:
             board[coord[0]][coord[1]] = ' '
 
+def orbs_remaining(board_string):
+    board = [[board_string[i * columns + j] for j in range(columns)] for i in range(rows)]
+    combo_coords = find_combos(board)
+    orbs_used = 0
+
+    while len(combo_coords) > 0:
+        orbs_used += sum([len(match) for match in combo_coords])
+        remove_combos(board, combo_coords)
+        fall_all(board)
+        combo_coords = find_combos(board)
+
+    return rows*columns - orbs_used
+
 def combo_sim(board_string: str, x_sf: (int, int), print_stats=True, skyfall=True) -> \
         (str, int, int, int, int):
     '''board size is 0 for 6x5 and 1 for 7x6;
@@ -101,21 +122,16 @@ def combo_sim(board_string: str, x_sf: (int, int), print_stats=True, skyfall=Tru
     for i in range(ITERATIONS+1):
         board = copy.deepcopy(perm_board)
         total_combos = 0
-        orbs_used = 0
         guard_break = False
         combo_coords = find_combos(board)
 
         while len(combo_coords) > 0:
             total_combos += len(combo_coords)
-            orbs_used += sum([len(match) for match in combo_coords])
             remove_combos(board, combo_coords)
             fall_all(board)
-            if cc_list:
+            if cc_list: #first one is noSF
                 create_skyfalls(board)
             combo_coords = find_combos(board)
-
-        if not skyfall:
-            return total_combos, 30-orbs_used
 
         cc_list.append(total_combos)
 
@@ -135,7 +151,18 @@ def combo_sim(board_string: str, x_sf: (int, int), print_stats=True, skyfall=Tru
 
     return board_string, avg, avg_sf, min_c, p
 
-def set_skyfalls(distribution: [int]):
+def no_combos():
+    #returns probability of no combos
+    free = 0
+    for i in range(ITERATIONS):
+        board = gen_random_board()
+        if len(find_combos(board)) == 0:
+            free+=1
+
+    return free/ITERATIONS
+
+
+def set_skyfalls(distribution: [int] = [1/6, 1/6, 1/6, 1/6, 1/6, 1/6, 0, 0]):
     '''sets the skyfalls in order of RBGLDHJP'''
     global sf_distribution
     sf_distribution = distribution
@@ -147,5 +174,10 @@ def set_to_76():
     columns = 7
 
 if __name__ == '__main__':
+    #set_skyfalls([1/4, 1/4, 1/4, 1/4, 0, 0, 0, 0]) #luci is quadcolor
+    print(no_combos())
+    set_skyfalls()
     board_string = "DDDLLLLLLDDDDDDLLLLLLDDDDDDLLL"
+    assert orbs_remaining(board_string) == 0
+    assert orbs_remaining('bgrgbgbrrbrggrrbrgbbrrbbggggrg') == 13
     combo_sim(board_string, (15, 2), print_stats=True, skyfall=True)
