@@ -12,7 +12,7 @@ from DQN import DQN
 import logging
 from ReplayMemory import ReplayMemory
 
-logging.basicConfig(filename = 'training_logs.log', level = logging.INFO, format='%(message)s')
+logging.basicConfig(filename = 'logs/training_logs.log', level = logging.INFO, format='%(message)s')
 Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward'))
 
 class Agent:

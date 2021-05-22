@@ -1,7 +1,6 @@
 from torch import nn
 import torch.nn.functional as F
 from torch.nn import Sequential
-import numpy as np
 import torch
 
 conv1 = lambda f_in, f_out: nn.Conv2d(f_in, f_out, kernel_size=3, stride=1, padding=1)
@@ -30,8 +29,6 @@ class DQN(nn.Module):
 
         self.linear1 = nn.Linear(12, 4)
 
-
-
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
@@ -39,4 +36,3 @@ class DQN(nn.Module):
         pos_ranks = self.linear1(conv_layers)
 
         return pos_ranks
-
