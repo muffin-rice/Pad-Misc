@@ -7,7 +7,7 @@ from Training_Board import Training_Board
 from torch import optim
 import copy
 from itertools import count
-from combo_tools import combo_sim
+from combo_classes import get_board_string
 from DQN import DQN
 import logging
 from ReplayMemory import ReplayMemory
@@ -28,7 +28,9 @@ class Agent:
 
     def select_action(self, state):
         if random.random() > self.threshold:
-            return torch.argmax(self.target(state))[0].item()
+            # return torch.argmax( self.target(state) )[0].item()
+            choice = self.target(torch.unsqueeze(state, 0))
+            return torch.argmax(choice).item()
 
         else: #random
             return torch.tensor([random.randrange(4)], dtype = torch.long)
@@ -76,12 +78,12 @@ class Agent:
             logging.info(f'On board #{i}; board is\n')
             choices = tuple(range(c))
             old_board = [[random.choice(choices) for j in range(6)] for i in range(5)] #save the board
-            combo_sim.print_board(old_board)
+            logging.info(get_board_string(old_board))
 
             for j in range(num_starts): #randomize different starting positions to simulate choosing a starting loc
                 tb.reset(colors = c, board = copy.deepcopy(old_board)) #set the board back to original
                 tb.finger_loc = [random.randrange(5), random.randrange(6)] #randomize starting pos
-                combo_sim.print_board(tb.board)
+                logging.info(get_board_string(tb.board))
                 state = tb.get_state() #initial state
 
                 for t in count(): #try to solve the board
@@ -99,7 +101,7 @@ class Agent:
 
                     if self.steps % 10000 == 0: #tracking process
                         logging.info(f'On board {i}, move # {t+1}')
-                        combo_sim.print_board(tb.board)
+                        logging.info(get_board_string(tb.board))
                         logging.info(f'Position: {tb.finger_loc}\n')
 
                     if self.steps % self.target_update == 0:
@@ -108,7 +110,7 @@ class Agent:
                     if done:
                         self.memory.push(state, action, new_state, reward)
                         logging.info(f'Finished board {i} in {t+1} moves.')
-                        combo_sim.print_board(tb.board)
+                        logging.info(get_board_string(tb.board))
                         logging.info(f'Position: {tb.finger_loc}\n')
                         self.training_history.append(t + 1)
                         break

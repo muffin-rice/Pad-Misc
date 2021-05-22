@@ -2,6 +2,9 @@ import copy
 
 rows,columns = 5,6
 
+def get_board_string (board : [[str]]):
+    return '\n'.join(''.join(str(orb) for orb in row) for row in board)
+
 def remove_overlapping(all_combos):
     to_purge = set()
     for i in range(len(all_combos) - 1):
