@@ -1,5 +1,5 @@
 import random
-from combo_tools import combo_sim
+from combo_classes import orbs_remaining
 import torch
 import copy
 
@@ -86,7 +86,7 @@ class Training_Board:
 
     def get_reward(self) -> (int, bool):
         '''returns the reward, and should be called after update state probably. Might not be Markov. '''
-        if combo_sim.orbs_remaining(self.board) == 0: #if completely solved
+        if orbs_remaining(self.board) == 0: #if completely solved
             return 1.0, True
         if not self.change: #if chose an invalid move
             return -.75, False
