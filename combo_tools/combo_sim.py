@@ -19,6 +19,9 @@ def gen_random_board():
 
     return board
 
+def get_board (board : [[str]]):
+    return '\n'.join(''.join(str(orb) for orb in row) for row in board)
+
 def print_board(board: [[str]]):  # debugging purposes
     print('\n'.join(''.join(str(orb) for orb in row) for row in board))
 
