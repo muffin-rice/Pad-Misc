@@ -73,7 +73,7 @@ class Agent:
     def train(self, episodes = 10000):
         tb = Training_Board()
         num_starts = 2
-        c, cutoff, capa = 2, 75, 5
+        c, cutoff, capa, o_cap = 2, 75, 5, 4
 
         for i in range(episodes // num_starts):
             if i > episodes // num_starts // cutoff:
@@ -105,7 +105,8 @@ class Agent:
                         self.memory.push(state, action, new_state, reward)
 
                     state = new_state
-                    self.optimize()
+                    if capa_i < capa:
+                        self.optimize()
 
                     if self.steps % 10000 == 0: #tracking process
                         logging.info(f'On board {i}, move # {t+1}')
