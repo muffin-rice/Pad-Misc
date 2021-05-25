@@ -10,7 +10,7 @@ if __name__ == '__main__':
     agent = Agent.Agent(batch_size = 16, gamma = .999, eps_start = .95, eps_end = .05, eps_decay = 200, target_update = 10,
                  memory_size = 5000)
 
-    logging.info('Version 0.5.0')
+    logging.info('Version 0.6.0')
     logging.info('Starting training:')
     agent.train(episodes = 500)
     logging.info('Finished training')

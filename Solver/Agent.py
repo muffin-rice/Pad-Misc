@@ -21,19 +21,20 @@ class Agent:
         self.batch_size, self.gamma, self.eps_start, self.eps_end, self.eps_decay, self.target_update \
             = batch_size, gamma, eps_start, eps_end, eps_decay, target_update
 
-        self.steps, self.threshold, self.policy, self.target = 0, 0, DQN(), DQN()
+        self.steps, self.threshold, self.policy, self.target = 0, eps_start, DQN(), DQN()
         self.optimizer = optim.RMSprop(self.policy.parameters())
         self.memory = ReplayMemory(memory_size)
         self.training_history = []
 
     def select_action(self, state):
+        #returns a 4-tensor
+
         if random.random() > self.threshold:
-            # return torch.argmax( self.target(state) )[0].item()
             choice = self.target(torch.unsqueeze(state, 0))
-            return torch.argmax(choice).item()
+            return torch.tensor([torch.argmax(choice)], dtype = torch.int64)
 
         else: #random
-            return torch.tensor([random.randrange(4)], dtype = torch.long)
+            return torch.tensor([random.randrange(4)], dtype = torch.int64)
 
     def update_target(self):
         self.target.load_state_dict(self.policy.state_dict())
@@ -47,9 +48,9 @@ class Agent:
 
         batch = Transition(*zip(*self.memory.sample(self.batch_size)))
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)), dtype=torch.bool).view(self.batch_size, 1)
-        non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
+        non_final_next_states = torch.stack([s for s in batch.next_state if s is not None])
 
-        state_batch = torch.cat(batch.state)
+        state_batch = torch.stack(batch.state)
         action_batch = torch.stack(batch.action)
         reward_batch = torch.stack(batch.reward)
 
@@ -71,29 +72,36 @@ class Agent:
 
     def train(self, episodes = 10000):
         tb = Training_Board()
-        num_starts = 4
-        c = 3
+        num_starts = 2
+        c, cutoff, capa = 2, 75, 5
 
         for i in range(episodes // num_starts):
-            logging.info(f'On board #{i}; board is\n')
-            choices = tuple(range(c))
-            old_board = [[random.choice(choices) for j in range(6)] for i in range(5)] #save the board
-            logging.info(get_board_string(old_board))
+            if i > episodes // num_starts // cutoff:
+                random_colors = range(3)
+            else:
+                random_colors = random.sample(range(3), c)
+
+            old_board = [[random.choice(random_colors) for jj in range(6)] for ii in range(5)] #save the board
+            logging.info(f'On board #{i}; board is\n{get_board_string(old_board)}\n')
 
             for j in range(num_starts): #randomize different starting positions to simulate choosing a starting loc
                 tb.reset(colors = c, board = copy.deepcopy(old_board)) #set the board back to original
                 tb.finger_loc = [random.randrange(5), random.randrange(6)] #randomize starting pos
-                logging.info(get_board_string(tb.board))
                 state = tb.get_state() #initial state
+
+                capa_i = 0
 
                 for t in count(): #try to solve the board
                     action = self.select_action(state)
-                    tb.update_state(action)
+                    tb.update_state(action.item())
                     reward, done = tb.get_reward()
                     reward = torch.tensor([reward])
 
+                    self.steps += 1
+
                     new_state = tb.get_state()
-                    if random.random() < .01: #so it doesnt push a lot
+                    if capa_i < capa and random.random() < .01: #so it doesnt push a lot
+                        capa_i += 1
                         self.memory.push(state, action, new_state, reward)
 
                     state = new_state
